@@ -11,7 +11,7 @@ export class HttpService {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  curApi : string = 'https://localhost:5001/api/DBRecords';
+  curApi : string = 'https://localhost:5001/api/Site';
 
   constructor(
     private http: HttpClient,

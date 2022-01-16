@@ -5,7 +5,7 @@ namespace Website_parser.DbContexts
 {
     public class WebSiteDBContext : DbContext
     {
-        public DbSet<DBRecord> Articles { get; set; }
+        public DbSet<Article> Articles { get; set; }
         public DbSet<Site> Sites { get; set; }
 
         public WebSiteDBContext(DbContextOptions<WebSiteDBContext> options) : base(options)

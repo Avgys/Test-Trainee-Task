@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpService } from '../services/http.service';
 
 
@@ -8,35 +8,35 @@ import { HttpService } from '../services/http.service';
   templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnInit {
-  form: FormGroup;
-  
+  crawlSiteForm: FormGroup;
+
   constructor(
-    private formBuilder: FormBuilder,
     private httpService: HttpService
-  ){
-    this.form = this.formBuilder.group({
-      url: ['']
-  });
-
+  ){    
+    this.crawlSiteForm = new FormGroup({
+      url: new FormControl('')
+    });
   }
+
   ngOnInit(): void {
-    this.form = this.formBuilder.group({
-      url: ['']
-    })
+    this.crawlSiteForm = new FormGroup({
+      url: new FormControl('')
+    });
   }
 
-  onSubmit(){
+  onCrawlSubmit(){
 
-    if (this.form.invalid) {
+    // alert("2");
+    if (this.crawlSiteForm.invalid) {
       return;
     }
 
-    this.httpService.ParseSite(this.form.controls.url.value)
+    this.httpService.ParseSite(this.crawlSiteForm.controls.url.value)
     .pipe()
     .subscribe(
       data => {
         alert(data);
       }
     );  
-  }
+  }    
 }

@@ -1,18 +1,15 @@
-<div class="card">
-  <div>
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label for="login">URL</label>
-        <input type="text" formControlName="url" class="form-control" [ngClass]="{ 'is-invalid': submitted && form.controls.login.errors }" />
-        <div *ngIf="form.controls.login.errors" class="invalid-feedback">
-            <div *ngIf="form.controls.login.errors.required">url is required</div>
+
+    <div>
+      <form [formGroup]="crawlSiteForm" (ngSubmit)="onCrawlSubmit()">
+        <div class="form-group">
+          <label for="url">URL</label>
+          <input type="text" formControlName="url" class="form-control"/>
+
+          <button class="btn btn-primary">
+              Check site
+          </button>
         </div>
-    </div>
-    <div class="form-group">
-        <button class="btn btn-primary">
-            Check site
-        </button>
-    </div>
-    </form>
-  </div>
-</div>
+      </form>
+    </div>  
+
+ <app-word-form></app-word-form>

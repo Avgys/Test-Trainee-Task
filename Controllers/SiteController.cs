@@ -31,9 +31,19 @@ namespace Website_parser.Controllers
 
         // GET: api/Sites
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Site>>> GetArticles()
+        public async Task<ActionResult<IEnumerable<Site>>> GetArticles([FromQuery] string keyword)
         {
-            return await _context.Sites.ToListAsync();
+            if (!String.IsNullOrEmpty(keyword))
+            {
+                var articles = _context.Articles.Take(10).ToList();
+                var sites = articles
+                    .Where(a => a.text.Contains(keyword))
+                    .Select(a => new Site() { url = a.url })
+                    .ToList();
+                return sites;
+            }
+            //return await _context.Sites.ToListAsync();
+            return NotFound();
         }
 
         // GET: api/Sites/5
@@ -87,7 +97,7 @@ namespace Website_parser.Controllers
         public async Task<ActionResult<Site>> PostSite(Site site)
         {
             Uri uri;
-            bool isUrlValid = Uri.TryCreate(site.url, UriKind.RelativeOrAbsolute, out uri);
+            bool isUrlValid = Uri.TryCreate(site.url, UriKind.Absolute, out uri);
             if (isUrlValid)
             {
                 var articles = await CrawlSite(uri);
@@ -159,7 +169,7 @@ namespace Website_parser.Controllers
             document.LoadHtml(body);
             String plainBody = document.DocumentNode.InnerText;
             plainBody = Regex.Replace(plainBody, "[\n\t]", String.Empty);
-            article.text = plainBody;
+            article.text = plainBody.Trim().Replace("  "," ");
             lock (e.CrawlContext.CrawlBag.Articles)
                 e.CrawlContext.CrawlBag.Articles.Add(article);
         }

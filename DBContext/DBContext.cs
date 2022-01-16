@@ -10,6 +10,7 @@ namespace Website_parser.DbContexts
 
         public WebSiteDBContext(DbContextOptions<WebSiteDBContext> options) : base(options)
         {
+            //Database.EnsureDeleted();
             Database.EnsureCreated();
         }
     }

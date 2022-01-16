@@ -10,6 +10,10 @@ using Website_parser.Models;
 using Abot2.Core;
 using Abot2.Crawler;
 using Abot2.Poco;
+using HtmlAgilityPack;
+using System.Text.RegularExpressions;
+using System.Net;
+using System.Threading;
 
 namespace Website_parser.Controllers
 {
@@ -18,6 +22,7 @@ namespace Website_parser.Controllers
     public class SiteController : ControllerBase
     {
         private readonly WebSiteDBContext _context;
+        private static object ArticlesSync = new object();
 
         public SiteController(WebSiteDBContext context)
         {
@@ -82,11 +87,16 @@ namespace Website_parser.Controllers
         public async Task<ActionResult<Site>> PostSite(Site site)
         {
             Uri uri;
-            bool isUrlValid = Uri.TryCreate("http://" + site.url, UriKind.RelativeOrAbsolute, out uri);
-            if (isUrlValid) {
-                await CrawlSite(uri);
-                _context.Sites.Add(site);
-                await _context.SaveChangesAsync();
+            bool isUrlValid = Uri.TryCreate(site.url, UriKind.RelativeOrAbsolute, out uri);
+            if (isUrlValid)
+            {
+                var articles = await CrawlSite(uri);
+                bool isDuplicate = await _context.Sites.AnyAsync(e => e.url == site.url);
+                if (!isDuplicate)
+                {
+                    _context.Sites.Add(site);
+                    await _context.SaveChangesAsync();
+                }
 
                 return CreatedAtAction("GetSite", new { id = site.id }, site);
             }
@@ -96,26 +106,62 @@ namespace Website_parser.Controllers
             }
         }
 
-        private async Task CrawlSite(Uri uri)
+        private async Task<IEnumerable<Article>> CrawlSite(Uri uri)
         {
             var config = new CrawlConfiguration
             {
                 MaxPagesToCrawl = 10,
                 MinCrawlDelayPerDomainMilliSeconds = 50 //Wait this many millisecs between requests
             };
-            
-            var crawler = new PoliteWebCrawler(config);
 
+            var crawler = new PoliteWebCrawler(config);
+            var articles = new List<Article>();
+            crawler.CrawlBag.Articles = articles;
             crawler.PageCrawlCompleted += PageCrawlCompleted;//Several events available...
-            
+
             var crawlResult = await crawler.CrawlAsync(uri);
+            foreach (var a in articles) {
+                bool isDuplicate = await _context.Articles.AnyAsync(e => e.url == a.url);
+                if (!isDuplicate)
+                {
+                    _context.Articles.Add(a);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return articles;
         }
 
-        private static void PageCrawlCompleted(object sender, PageCrawlCompletedArgs e)
+        private static async void PageCrawlCompleted(object sender, PageCrawlCompletedArgs e)
         {
-            var httpStatus = e.CrawledPage.HttpResponseMessage.StatusCode;
-            //var htmlText = e.CrawledPage.Content.;
-            var rawPageText = e.CrawledPage.Content.Text;
+            if (e.CrawledPage.HttpRequestException != null || e.CrawledPage.HttpResponseMessage.StatusCode != HttpStatusCode.OK)
+                Console.WriteLine($"Crawl of page failed {e.CrawledPage.Uri.AbsoluteUri}");
+            else
+                Console.WriteLine($"Crawl of page succeeded {e.CrawledPage.Uri.AbsoluteUri}");
+
+            if (string.IsNullOrEmpty(e.CrawledPage.Content.Text))
+                Console.WriteLine($"Page had no content {e.CrawledPage.Uri.AbsoluteUri}");
+
+            Article article = new Article();
+            article.title = e.CrawledPage.AngleSharpHtmlDocument.Title;
+            var body = e.CrawledPage.AngleSharpHtmlDocument.Body.OuterHtml;
+            var metas = e.CrawledPage.AngleSharpHtmlDocument
+                .GetElementsByTagName("meta")
+                .Where(e => e.GetAttribute("property") == "article:published_time")
+                .ToList();
+            if (metas.Count > 0)
+            {
+                article.date = metas[0].GetAttribute("content");
+            }
+            article.url = e.CrawledPage.Uri.AbsoluteUri;
+            article.htmlText = e.CrawledPage.Content.Text;
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(body);
+            String plainBody = document.DocumentNode.InnerText;
+            plainBody = Regex.Replace(plainBody, "[\n\t]", String.Empty);
+            article.text = plainBody;
+            lock (e.CrawlContext.CrawlBag.Articles)
+                e.CrawlContext.CrawlBag.Articles.Add(article);
         }
 
         // DELETE: api/Sites/5

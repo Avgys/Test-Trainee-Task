@@ -33,7 +33,8 @@ export class WordFormComponent implements OnInit {
     .pipe()
     .subscribe(
       data => {
-        alert(data);
+        alert('success');
+        //alert(data);
       }
     );  
   }

@@ -4,7 +4,7 @@ namespace Website_parser.Models
 {
     public class RequestBody
     {
-        public string url { get; set; }
+        public string Url { get; set; }
     }
 }
 

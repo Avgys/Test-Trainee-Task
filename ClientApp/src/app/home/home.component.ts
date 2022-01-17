@@ -28,14 +28,14 @@ export class HomeComponent implements OnInit {
 
     // alert("2");
     if (this.crawlSiteForm.invalid) {
-      return;
+     return;
     }
 
     this.httpService.ParseSite(this.crawlSiteForm.controls.url.value)
     .pipe()
     .subscribe(
       data => {
-        alert(data);
+        alert('success');
       }
     );  
   }    

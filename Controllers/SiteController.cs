@@ -30,35 +30,67 @@ namespace Website_parser.Controllers
         {
             _context = context;
             Pullenti.Sdk.InitializeAll();
-
-            string text = "Правительство России задумало вернуть налог на движимое имущество, который отменили с 1 января 2019 года, еще при предыдущем составе кабмина. Об этом заявил замминистра финансов Алексей Лавров, пишут «Ведомости». Спикер Совета Федерации Валентина Матвиенко напомнила, что ранее предупреждали о негативных последствиях налогового послабления: «Освободить от налога стоило только новое оборудование, приобретаемое компаниями, но нас не послушали, все освободили». В 2019 году Минфин оценил выпадающие доходы в 183 миллиарда рублей. Компенсировать их предполагалось за счет роста цен на крепкий алкоголь, но добиться этого не удалось.";
-            // создаём экземпляр процессора со стандартными анализаторами
-            Processor processor = ProcessorService.CreateProcessor();
-            // запускаем на тексте text
-            AnalysisResult result = processor.Process(new SourceOfAnalysis(text));
-            // получили выделенные сущности
-
-            foreach (Referent entity in result.Entities)
-            {
-                
-                Console.WriteLine(entity.ToString());
-            }
         }
 
         // GET: api/Sites
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Site>>> GetArticles([FromQuery] string keyword)
+        public async Task<ActionResult<IEnumerable<String>>> GetArticles([FromQuery] string word, [FromQuery] string entityName, [FromQuery] string entityAttribute)
         {
-            if (!String.IsNullOrEmpty(keyword))
+            if (!String.IsNullOrEmpty(word))
             {
-                var articles = _context.Articles.OrderBy(e => e.Id).Take(100).ToList();
-                var sites = articles
-                    .Where(a => a.Text.Contains(keyword))
-                    .Select(a => new Site() { Url = a.Url })
+                var sites = _context.Articles
+                    .Where(a => a.Text.Contains(word))
+                    .Select(a => a.Url)
                     .ToList();
+
+                Console.WriteLine("Find {0} word", word);
+
+                foreach(var site in sites)
+                {
+                    Console.WriteLine(site);
+                }
+
+                Console.WriteLine("Found {0} matches", sites.Count);
                 return sites;
             }
-            //return await _context.Sites.ToListAsync();
+
+            if (!String.IsNullOrEmpty(entityName))
+            {
+                var sites = (from ent in _context.Entities
+                            join pair in _context.InfoPairs on ent.Id equals pair.EntityId
+                            join article in _context.Articles on pair.ArticleId equals article.Id
+                            where ent.Name == entityName 
+                            select article.Url).ToList();
+
+                Console.WriteLine("Find {0} word", word);
+                foreach (var site in sites)
+                {
+                    Console.WriteLine(site);
+                }
+
+                Console.WriteLine("Found {0} matches", sites.Count);
+
+                return sites;
+            }
+
+            if (!String.IsNullOrEmpty(entityAttribute))
+            {                
+                var sites = (from attr in _context.EntityAttributes
+                                join ent in _context.Entities on attr.ParentEntityId equals ent.Id
+                                join pair in _context.InfoPairs on ent.Id equals pair.EntityId
+                                join article in _context.Articles on pair.ArticleId equals article.Id
+                                where attr.Value == entityAttribute
+                                select article.Url).ToList();
+
+                Console.WriteLine("Find {0} word", word);
+                foreach (var site in sites)
+                {
+                    Console.WriteLine(site);
+                }
+
+                Console.WriteLine("Found {0} matches", sites.Count);
+                return sites;
+            }
             return NotFound();
         }
 
@@ -166,6 +198,7 @@ namespace Website_parser.Controllers
             Processor processor = ProcessorService.CreateProcessor();
             List<ArticleEntity> listPairs = new();
             Dictionary<string, Entity> entList = new();
+            List<Models.Attribute> attrList = new();
 
             Console.WriteLine("Finding entities in text started.");
             foreach (var a in articles)
@@ -181,7 +214,21 @@ namespace Website_parser.Controllers
                         {
                             var ent = new Entity() { Name = key };
                             entList.Add(key, ent);
-                            _context.Entyties.Add(ent);
+
+                            foreach (var slot in entity.Slots)
+                            {                                
+                                if (slot.Value is string)
+                                {
+                                    attrList.Add(new Models.Attribute()
+                                    {
+                                        ParentEntity = ent,
+                                        Value = slot.Value as string,
+                                        Type = slot.TypeName
+                                    });
+                                }
+                            }
+                            
+                            _context.Entities.Add(ent);
                             listPairs.Add(new ArticleEntity() { Article = a, Entity = ent });
                         }
                         else
@@ -200,7 +247,14 @@ namespace Website_parser.Controllers
 
             await _context.SaveChangesAsync();
 
-            //List<ArticleEntityPair> listPairBD = new();
+            foreach(var attr in attrList)
+            {
+                attr.ParentEntityId = attr.ParentEntity.Id;
+                _context.EntityAttributes.Add(attr);
+            }
+
+            await _context.SaveChangesAsync();
+
             Console.WriteLine("Adding pairs of entities and articles started.");
             foreach (var pair in listPairs)
             {
@@ -231,17 +285,21 @@ namespace Website_parser.Controllers
                 .GetElementsByTagName("meta")
                 .Where(e => e.GetAttribute("property") == "article:published_time")
                 .ToList();
+            
             if (metas.Count > 0)
             {
                 article.Date = metas[0].GetAttribute("content");
             }
+
             article.Url = e.CrawledPage.Uri.AbsoluteUri;
             article.HtmlText = e.CrawledPage.Content.Text;
+            
             HtmlDocument document = new HtmlDocument();
             document.LoadHtml(body);
             String plainBody = document.DocumentNode.InnerText;
             plainBody = Regex.Replace(plainBody, "[\n\t]", String.Empty);
             article.Text = plainBody.Trim().Replace("  ", " ");
+            
             lock (e.CrawlContext.CrawlBag.Articles)
                 e.CrawlContext.CrawlBag.Articles.Add(article);
         }

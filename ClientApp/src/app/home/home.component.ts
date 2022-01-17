@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Site } from '../models/Site';
 import { HttpService } from '../services/http.service';
 
 
@@ -9,6 +10,10 @@ import { HttpService } from '../services/http.service';
 })
 export class HomeComponent implements OnInit {
   crawlSiteForm: FormGroup;
+  findWordForm: FormGroup;
+  findEntityForm: FormGroup;
+  findAttrForm: FormGroup;
+  sites: Site[];
 
   constructor(
     private httpService: HttpService
@@ -16,11 +21,35 @@ export class HomeComponent implements OnInit {
     this.crawlSiteForm = new FormGroup({
       url: new FormControl('')
     });
+
+    this.findWordForm = new FormGroup({
+      word: new FormControl('')
+    });
+
+    this.findEntityForm = new FormGroup({
+      word: new FormControl('')
+    });
+
+    this.findAttrForm = new FormGroup({
+      word: new FormControl('')
+    });
   }
 
   ngOnInit(): void {
     this.crawlSiteForm = new FormGroup({
       url: new FormControl('')
+    });
+
+    this.findWordForm = new FormGroup({
+      word: new FormControl('')
+    });
+
+    this.findEntityForm = new FormGroup({
+      word: new FormControl('')
+    });
+
+    this.findAttrForm = new FormGroup({
+      word: new FormControl('')
     });
   }
 
@@ -35,8 +64,44 @@ export class HomeComponent implements OnInit {
     .pipe()
     .subscribe(
       data => {
-        alert('success');
+        alert('Crawl success');
       }
     );  
-  }    
+  }   
+  
+  onWordSubmit(){
+    this.httpService.FindKeyword(this.findWordForm.controls.word.value, 'word')
+    .pipe()
+    .subscribe(
+      data => {
+        this.sites = data;
+        alert('success');
+        //alert(data);
+      }
+    );  
+  }
+
+  onEntitySubmit(){
+    this.httpService.FindKeyword(this.findEntityForm.controls.word.value, 'entityName')
+    .pipe()
+    .subscribe(
+      data => {
+        this.sites = data;
+        alert(this.sites.length)
+        //alert(data);
+      }
+    );  
+  }
+
+  onAttrSubmit(){
+    this.httpService.FindKeyword(this.findAttrForm.controls.word.value, 'entityAttribute')
+    .pipe()
+    .subscribe(
+      data => {
+        this.sites = data;
+        alert(this.sites.length);
+        //alert(data);
+      }
+    );  
+  }
 }

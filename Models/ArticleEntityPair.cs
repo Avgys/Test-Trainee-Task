@@ -1,3 +1,5 @@
+using Pullenti.Ner;
+
 namespace Website_parser.Models
 {
     public class ArticleEntityPair

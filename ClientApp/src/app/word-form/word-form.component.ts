@@ -29,7 +29,7 @@ export class WordFormComponent implements OnInit {
 
   onWordSubmit(){
     alert(this.findWordForm.controls.word.value);
-    this.httpService.FindKeyword(this.findWordForm.controls.word.value)
+    this.httpService.FindKeyword(this.findWordForm.controls.word.value, 'word')
     .pipe()
     .subscribe(
       data => {

@@ -1,14 +1,55 @@
 
-    <div>
-      <form [formGroup]="crawlSiteForm" (ngSubmit)="onCrawlSubmit()">
-        <div class="form-group">
-          <label for="url">URL</label>
-          <input type="text" formControlName="url" class="form-control"/>
-          <button class="btn btn-primary">
-              Check site
-          </button>
-        </div>
-      </form>
-    </div>  
+  <div>
+    <form [formGroup]="crawlSiteForm" (ngSubmit)="onCrawlSubmit()">
+      <div class="form-group">
+        <label for="url">URL</label>
+        <input type="text" formControlName="url" class="form-control"/>
+        <button class="btn btn-primary">
+            Check site
+        </button>
+      </div>
+    </form>
+  </div>  
 
- <app-word-form></app-word-form>
+  <div>
+    <form [formGroup]="findWordForm" (ngSubmit)="onWordSubmit()">
+      <div class="form-group">
+          <label for="word">Find word</label>
+          <input type="text" formControlName="word" class="form-control" />
+      </div>   
+        
+      <button class="btn btn-secondary">
+          Find
+      </button>         
+    </form> 
+  </div>
+
+  <div>
+    <form [formGroup]="findEntityForm" (ngSubmit)="onEntitySubmit()">
+      <div class="form-group">
+        <label for="word">Entity</label>
+        <input type="text" formControlName="word" class="form-control"/>
+        <button class="btn btn-primary">
+          Find
+        </button>
+      </div>
+    </form>
+  </div>  
+
+  <div>
+    <form [formGroup]="findAttrForm" (ngSubmit)="onAttrSubmit()">
+      <div class="form-group">
+        <label for="word">Attribute</label>
+        <input type="text" formControlName="word" class="form-control"/>
+        <button class="btn btn-primary">
+          Find
+        </button>
+      </div>
+    </form>
+  </div>  
+
+  <div>
+    <li *ngFor="let site of sites">
+     <a href={{site}}>{{site}}</a> 
+    </li>
+  </div>

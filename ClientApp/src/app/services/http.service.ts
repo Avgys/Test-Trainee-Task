@@ -28,8 +28,9 @@ export class HttpService {
     );
   }
 
-  FindKeyword(keyword: string, currentApi: string = this.curApi) {   
-    let url = `${currentApi}/` + `?keyword=${keyword}`; 
+  FindKeyword(keyword: string, options: string, currentApi: string = this.curApi) {   
+    let url = `${currentApi}/` + `?${options}=${keyword}`; 
+    alert(url);
     return this.http.get<Site[]>(url, this.httpOptions).pipe(            
         // catchError(err => {
         //     this.handleError<Account>(`login`);

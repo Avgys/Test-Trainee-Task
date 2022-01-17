@@ -62,7 +62,7 @@ namespace Website_parser.Controllers
                             where ent.Name == entityName 
                             select article.Url).ToList();
 
-                Console.WriteLine("Find {0} word", word);
+                Console.WriteLine("Find {0} entity", word);
                 foreach (var site in sites)
                 {
                     Console.WriteLine(site);
@@ -82,7 +82,7 @@ namespace Website_parser.Controllers
                                 where attr.Value == entityAttribute
                                 select article.Url).ToList();
 
-                Console.WriteLine("Find {0} word", word);
+                Console.WriteLine("Find {0} attribute", word);
                 foreach (var site in sites)
                 {
                     Console.WriteLine(site);

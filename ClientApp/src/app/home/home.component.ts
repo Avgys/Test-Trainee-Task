@@ -54,8 +54,6 @@ export class HomeComponent implements OnInit {
   }
 
   onCrawlSubmit(){
-
-    // alert("2");
     if (this.crawlSiteForm.invalid) {
      return;
     }
@@ -76,7 +74,6 @@ export class HomeComponent implements OnInit {
       data => {
         this.sites = data;
         alert('success');
-        //alert(data);
       }
     );  
   }
@@ -88,7 +85,6 @@ export class HomeComponent implements OnInit {
       data => {
         this.sites = data;
         alert(this.sites.length)
-        //alert(data);
       }
     );  
   }
@@ -100,7 +96,6 @@ export class HomeComponent implements OnInit {
       data => {
         this.sites = data;
         alert(this.sites.length);
-        //alert(data);
       }
     );  
   }
